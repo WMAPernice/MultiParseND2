@@ -1,5 +1,5 @@
 # MultiParseND2
-Package to extract and process images from multipoint ND2-files 
+Pure python scripts to extract and process images from multipoint ND2-files in a parallelized fashion.
 
 ```
 usage: ND2tif.py [-h] [-c [CHANNELS [CHANNELS ...]]] [-z ZPROJECT]
