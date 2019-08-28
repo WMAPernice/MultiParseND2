@@ -118,7 +118,7 @@ if __name__ == '__main__':
             ParseMultiPointND2, args=(str(i), params.ND2file, out_path, start, end,
             params.channels, 
             params.zproject, 
-            params.size,
+            tuple(params.size),
             params.itpl,
             params.dtype,
             params.wishdict
