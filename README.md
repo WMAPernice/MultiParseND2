@@ -1,12 +1,13 @@
 # MultiParseND2
-Package to extract and process images from multipoint ND2-files 
+Pure python scripts to extract and process images from multipoint ND2-files in a parallelized fashion.
 
-
+```
 usage: ND2tif.py [-h] [-c [CHANNELS [CHANNELS ...]]] [-z ZPROJECT]
                  [-s [SIZE [SIZE ...]]] [-i ITPL] [-d DTYPE] [-wd WISHDICT]
                  [-t TAG] [-r [RANGE [RANGE ...]]] [-w WORKERS]
                  ND2file outdir
-
+```
+```
 positional arguments:
   ND2file               Specify path to multipoint .nd2 file
   outdir                Specify path output directory
@@ -37,3 +38,4 @@ optional arguments:
                         process (default: None)
   -w WORKERS, --workers WORKERS
                         specify number of workers (default: 1)
+```
