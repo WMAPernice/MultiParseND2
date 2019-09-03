@@ -1,10 +1,3 @@
-
-"""
-ND2tif:
-
-TODO: write description
-
-"""
 import os
 import time
 import logging
@@ -47,12 +40,11 @@ def ParseMultiPointND2(pid, in_path, out_path, start, end, channels=None, zproje
                     im = dtype_conversion(im, to_dtype, forcecopy=False)
 
                 # saving
-                fpath = f"{out_path}_{str(start + v).zfill(4)}.tiff"
+                fpath = f"{out_path}_{str(start + v)}.tiff"
                 savetiff(im, fpath, res, addMeta)
         except: logging.exception('Exception occured: ')
 
 if __name__ == '__main__':
-    t00 = time.time()
 
     # parameters:
     parser = argparse.ArgumentParser()
@@ -66,7 +58,7 @@ if __name__ == '__main__':
                 my_dict[key] = val
             setattr(namespace, self.dest, my_dict)
 
-    parser.add_argument('ND2file', type=str, help='Specify path to multipoint .nd2 file')
+    parser.add_argument('indir', type=str, help='Specify path to input directory')
     parser.add_argument('outdir', type=str, help='Specify path output directory')
     parser.add_argument('-c', '--channels', type=int, nargs='*', default=None, help='provide list to specify channels to be extracted and/or reorder them, e.g. [1,2,0,3]')
     parser.add_argument('-z', '--zproject', type=str, default=None, help='provide string to specify mode of z-projection, e.g. max_project') #TODO: add options
@@ -79,56 +71,59 @@ if __name__ == '__main__':
     parser.add_argument('-w', '--workers', type=int, default=1, help='specify number of workers (default: 1)')
     params = parser.parse_args()
 
-    # setup list_len and naming:
-    with ND2Reader(params.ND2file) as images:
-        images.bundle_axes = 'zcyx'
-        images.iter_axes = 'v'
-        list_len = len(images)
-        if params.range: 
-            L1, L2 = params.range
-            assert L1 < list_len and L2 <= list_len, f'Range out of bounds. Only {list_len} images in {params.ND2file}'
-            list_len = L2 - L1
-        else: L1 = 0
+    flist = [params.indir + f for f in os.listdir(params.indir) if f.split('.')[-1] == 'nd2']
+    for ND2file in flist:
+        t00 = time.time()
+        # setup list_len and naming:
+        with ND2Reader(ND2file) as images:
+            images.bundle_axes = 'zcyx'
+            images.iter_axes = 'v'
+            list_len = len(images)
+            if params.range: 
+                L1, L2 = params.range
+                assert L1 < list_len and L2 <= list_len, f'Range out of bounds. Only {list_len} images in {ND2file}'
+                list_len = L2 - L1
+            else: L1 = 0
+                
+            # TODO: make this call a function:
+            fn = images.filename.split('/')[-1]
+            assert len(fn.split('_')) == 3, \
+            'Please name your files according to: [yyyy-m-d_Plate-de-script-tion_Idx.nd2]'
+            fn = '_'.join(fn.split('_')[1:3]).split('.')[0]
+            if params.tag: fn = f"{fn}_{params.tag}"
+            out_path = params.outdir + fn
             
-        # TODO: make this call a function:
-        fn = images.filename.split('/')[-1]
-        assert len(fn.split('_')) == 3, \
-        'Please name your files according to: [yyyy-m-d_Plate-de-script-tion_Idx.nd2]'
-        fn = fn.split('_')[1]
-        if params.tag: fn = f"{fn}_{params.tag}"
-        out_path = params.outdir + fn
         
-       
-    # Multiprocess setup. 
-    # Will never use more cores than images to be extracted.
-    process_num = np.min([params.workers, list_len])
+        # Multiprocess setup. 
+        # Will never use more cores than images to be extracted.
+        process_num = np.min([params.workers, list_len])
 
-    print('-------------------')
-    print(f"Starting image extraction for: {params.ND2file}")
-    print(f"Total images to be extracted {list_len}")
-    print(f"Workers: {process_num}")
-    print('Parent process %s.' % os.getpid())
-    print(f"Output directory: {out_path}")
-    print('-------------------')
-    p = Pool(process_num)
-    for i in range(process_num):
-        start = int(L1 + (i * list_len / process_num))
-        end = int(L1 + ((i + 1) * list_len / process_num))
-        p.apply_async(
-            ParseMultiPointND2, args=(str(i), params.ND2file, out_path, start, end,
-            params.channels, 
-            params.zproject, 
-            tuple(params.size),
-            params.itpl,
-            params.dtype,
-            params.wishdict
+        print('-------------------')
+        print(f"Starting image extraction for: {ND2file}")
+        print(f"Total images to be extracted {list_len}")
+        print(f"Workers: {process_num}")
+        print('Parent process %s.' % os.getpid())
+        print(f"Output directory: {out_path}")
+        print('-------------------')
+        p = Pool(process_num)
+        for i in range(process_num):
+            start = int(L1 + (i * list_len / process_num))
+            end = int(L1 + ((i + 1) * list_len / process_num))
+            p.apply_async(
+                ParseMultiPointND2, args=(str(i), ND2file, out_path, start, end,
+                params.channels, 
+                params.zproject, 
+                tuple(params.size),
+                params.itpl,
+                params.dtype,
+                params.wishdict
+                )
             )
-        )
 
-    print('Waiting for all subprocesses done...')
-    p.close()
-    p.join()
-    print('All subprocesses done.')
-    print(f"Total execution time: {time.time() - t00}")
-    print(f"Time-per-image: {(time.time() - t00)/list_len}")
+        print('Waiting for all subprocesses done...')
+        p.close()
+        p.join()
+        print('All subprocesses done.')
+        print(f"Total execution time: {time.time() - t00}")
+        print(f"Time-per-image: {(time.time() - t00)/list_len}")
 

@@ -1,0 +1,13 @@
+*.dict
+*.pickle
+*.tuple
+.idea
+*_DATA
+.DS_Store
+.vscode/
+runs/
+__pycache__/
+.ipynb_checkpoints/
+datasets/
+DEV_ND2tif_v1.ipynb
+
