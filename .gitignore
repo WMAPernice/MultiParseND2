@@ -1,6 +1,7 @@
 *.dict
 *.pickle
 *.tuple
+*.xlsx
 .idea
 *_DATA
 .DS_Store
