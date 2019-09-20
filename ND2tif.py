@@ -32,10 +32,12 @@ def ParseMultiPointND2(pid, in_path, out_path, start, end, channels=None, zproje
                     im = projectz(im, zproject)
 
                 # optional resize
-                if size:
+                if size[0]:
                     im = resize(im, size, itpl)
                     
                 # potential dtype conversion
+                # TODO: currently intensity rescaling still happens using each images min/max instead of dtype values!
+                # this SHOULD NOT be default. 
                 if to_dtype != str(im.dtype):
                     im = dtype_conversion(im, to_dtype, forcecopy=False)
 
@@ -86,7 +88,9 @@ if __name__ == '__main__':
             else: L1 = 0
                 
             # TODO: make this call a function:
-            fn = images.filename.split('/')[-1]
+            # fn = images.filename.split('/')[-1]
+            fn = os.path.basename(images.filename)
+            print(fn.split('_'))
             assert len(fn.split('_')) == 3, \
             'Please name your files according to: [yyyy-m-d_Plate-de-script-tion_Idx.nd2]'
             fn = '_'.join(fn.split('_')[1:3]).split('.')[0]
@@ -113,7 +117,7 @@ if __name__ == '__main__':
                 ParseMultiPointND2, args=(str(i), ND2file, out_path, start, end,
                 params.channels, 
                 params.zproject, 
-                tuple(params.size),
+                tuple([params.size]),
                 params.itpl,
                 params.dtype,
                 params.wishdict
