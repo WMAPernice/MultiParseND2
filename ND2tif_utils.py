@@ -7,7 +7,7 @@ import skimage.transform
 from skimage.external import tifffile
 from nd2reader import ND2Reader
 
-def dtype_conversion(image, to_dtype = 'uint16', forcecopy=False):
+def dtype_conversion(image, to_dtype = 'uint16', chax=1, in_range='image', forcecopy=False):
 
     conv_dict = {'float64': skimage.util.img_as_float64,
                  'float32': skimage.util.img_as_float32,
@@ -18,9 +18,14 @@ def dtype_conversion(image, to_dtype = 'uint16', forcecopy=False):
     f'Conversion to {to_dtype} is not implemented. Available conversions are limited to {list(conv_dict.keys())}'
     
     if image.dtype == 'float64':
-        # scale between 0:1 required for skimage conversions from float
-        image = skimage.exposure.rescale_intensity(image)  
-    
+        # Scale between 0:1 required for skimage conversions from float.
+        # Loop ensures that if in_range='image', internal min/max must be calculated per-channel, 
+        # in order to preserve maximum precision. 
+        if len(in_range) == 2: in_range = tuple([int(i) for i in in_range])
+        else: in_range = in_range[0]
+        for c in range(image.shape[1]): 
+            image[:,c,...] = skimage.exposure.rescale_intensity(image[:,c,...], in_range=in_range)
+
     return conv_dict[to_dtype](image, forcecopy)
 
 
