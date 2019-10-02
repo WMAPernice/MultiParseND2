@@ -7,7 +7,7 @@ import skimage.transform
 from skimage.external import tifffile
 from nd2reader import ND2Reader
 
-def dtype_conversion(image, to_dtype = 'uint16', chax=1, in_range='image', forcecopy=False):
+def dtype_conversion(image, to_dtype = 'uint16', in_range='image', forcecopy=False):
 
     conv_dict = {'float64': skimage.util.img_as_float64,
                  'float32': skimage.util.img_as_float32,
