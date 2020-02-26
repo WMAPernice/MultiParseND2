@@ -10,5 +10,8 @@ runs/
 __pycache__/
 .ipynb_checkpoints/
 datasets/
+dev/
+benchmarks/results/
+benchmarks/data/
 DEV_ND2tif_v1.ipynb
 
